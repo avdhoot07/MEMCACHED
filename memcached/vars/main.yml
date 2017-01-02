@@ -1,0 +1,6 @@
+memcached_file: "/etc/memcached.conf"
+memcached_log_file: "/var/log/memcached.log"
+phpini_path_dir: "/etc/php5/apache2"
+memcache_ini_dir: "/etc/php5/mods-available"
+memcached_conf_file: "/etc/memcached.conf"
+document_root_dir: "/var/www/html"

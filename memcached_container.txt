@@ -1,0 +1,60 @@
+https://www.digitalocean.com/community/tutorials/docker-explained-how-to-create-docker-containers-running-memcached
+
+
+sudo apt-get update
+sudo apt-get -y upgrade
+
+  tasks:
+   - name: Memcached_Install_packages
+     apt: name={{ item }}
+        state=latest
+        update_cache=yes
+
+
+apt-get install linux-image-extra-`uname -r`
+
+apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+
+- name: add the gpg key
+  apt_key: keyserver=hkp://p80.pool.sks-keyservers.net:80 id=58118E89F3A912897C070ADBF76221572C52609D
+
+echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" | sudo tee /etc/apt/sources.list.d/docker.list
+
+- name: add apt repository
+  apt_repository: repo='deb https://apt.dockerproject.org/repo ubuntu-trusty main' state=present
+
+apt-get update
+
+
+   - name: Update aufs support
+     shell: apt-get install linux-image-extra-'`uname -r`'
+
+
+apt-get install docker-engine
+
+   - name: Memcached_Install_packages
+     apt: name={{ item }}
+        state=latest
+        update_cache=yes
+     with_items:
+        - docker-engine
+
+========================
+
+
+Hi Jui,
+
+I have completed the given assignment using Ansible automation tool.
+
+1) Setup 3 servers with Memcached installed
+
+Answer : I have set up 3 Memcached Servers to test the PHP sessions in Apache server. Please find the attached Ansible script (name of attachment is memcached).
+
+
+2) Setup 3 memcached containers, each with their own port, on each server
+
+Answer : Here i have used DOCKER to setup 3 memcached containers. DOCKER will act as an container on server on which memcached will be used with different ports.
+ 
+
+   - name: Upgrade repository
+     shell: "apt-get -y upgrade; apt-get install python-pycurl"

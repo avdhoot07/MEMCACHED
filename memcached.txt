@@ -1,0 +1,169 @@
+“Using your favourite platforms/tools, please create a deployment automation system for Memcached within 3-4 days. This automation should be able to do the following:
+
+Setup 3 servers with Memcached installed
+
+PHP Sessions on Multiple Memcached Servers
+
+
+Setup 3 memcached containers, each with their own port, on each server
+
+Please be as elaborate as possible, with the assumptions you have made and the solution you developed. Even if your solution is not complete, we would like to understand your approach.”
+
+
+==================================================================================================================================================
+
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-memcache-on-ubuntu-14-04
+
+https://www.digitalocean.com/community/tutorials/how-to-share-php-sessions-on-multiple-memcached-servers-on-ubuntu-14-04
+
+
+memcached-3
+Internal IP : 10.0.3.15
+Public IP : 192.168.56.103
+
+memcahced-2
+
+
+===========================================================================================================
+
+Follow below steps on 3 servers :
+
+apt-get update
+
+apt-get install apache2
+
+apt-get install php5 libapache2-mod-php5 php5-mcrypt
+
+apt-get install php5-memcache memcached
+
+===========================================================================================================
+
+vim /etc/memcached.conf 
+
+replace below line on all three servers
+
+-l 127.0.0.1
+
+-l "private-IP"
+
+===========================================================================================================
+
+service memcached restart
+
+===========================================================================================================
+
+vim /etc/php5/apache2/php.ini
+
+session.save_handler =
+session.save_path =
+
+
+session.save_handler = memcache
+session.save_path = 'tcp://10.1.1.1:11211,tcp://10.2.2.2:11211,tcp://10.3.3.3:11211'
+
+===========================================================================================================
+
+vim /etc/php5/mods-available/memcache.ini
+
+memcache.allow_failover=1
+memcache.session_redundancy=4
+
+
+===========================================================================================================
+
+vim /var/www/html/session.php
+
+<?php
+    header('Content-Type: text/plain');
+    session_start();
+    if(!isset($_SESSION['visit']))
+    {
+        echo "This is the first time you're visiting this server\n";
+        $_SESSION['visit'] = 0;
+    }
+    else
+            echo "Your number of visits: ".$_SESSION['visit'] . "\n";
+
+    $_SESSION['visit']++;
+
+    echo "Server IP: ".$_SERVER['SERVER_ADDR'] . "\n";
+    echo "Client IP: ".$_SERVER['REMOTE_ADDR'] . "\n";
+    print_r($_COOKIE);
+?>
+
+===========================================================================================================
+
+ANSIBLE
+
+
+vars/main.yml
+
+memcached-1_port: "11211"
+memcached-2_port: "11212"
+memcached-3_port: "11213"
+memcached-1_listen_ip: "10.1.1.1"
+memcached-2_listen_ip: "10.2.2.2"
+memcached-3_listen_ip: "10.3.3.3"
+memcached_log_file: "/var/log/memcached.log"
+php5_apache2_path: "/etc/php5/apache2"
+php5_mods_path: "/etc/php5/mods-available"
+phpini_path_dir: "{{ apache_php5_path }}"
+	: "{{ php5_mods_path }}"
+memcached_conf_file: "/etc/memcached.conf"
+document_root_dir: "/var/www/html"
+-----------------------------------------------------------------------------------------------------------
+
+templates/etc-memcached.conf.j2
+
+-p {{ memcached_port }}
+-l {{ memcached_listen_ip }}
+
+-----------------------------------------------------------------------------------------------------------
+
+memcached.yml
+
+- name: Memcached | Install packages
+  action: apt pkg=$item state=installed
+  with_items:
+    - php5-memcache
+    - memcached
+    - apache2
+    - php5 
+    - libapache2-mod-php5 
+    - php5-mcrypt
+  tags: memcached
+
+- name: Memcached | Config file
+  action: template src=templates/etc-memcached.conf.j2 dest={{ memcached_file }}
+  tags: memcached
+
+- name: Memcached | Config file for the PHP memcache extension
+  action: template src=templates/etc-php5-apache2-php-ini.j2 dest= {{ etc_php5_apache2_phpini_file }}
+  tags: memcached
+
+ - name: start consul server
+   command: service apache2 restart
+
+===========================================================================================================
+
+
+===========================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

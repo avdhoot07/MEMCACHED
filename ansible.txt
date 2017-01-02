@@ -1,0 +1,122 @@
+vars/main .yml
+
+---
+consul_version: "0.6.4"
+consul_zip_url: "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip"
+consul_bin_path: "/usr/local/bin"
+consul_etc_path: "/etc/consul.d"
+consul_bootstrap: "bootstrap"
+consul_server: "server"
+consul_client: "client"
+consul_script: "script"
+consul_bootstrap_dir: "{{ consul_etc_path }}/{{ consul_bootstrap  }}"
+consul_server_dir: "{{ consul_etc_path }}/{{ consul_server  }}"
+consul_client_dir: "{{ consul_etc_path }}/{{ consul_client  }}"
+consul_scritp_dir:  "{{ consul_etc_path }}/{{ consul_script }}"
+consul_ssl_dir: "{{ consul_etc_path }}/ssl"
+consul_data_path: "/var/consul"
+consul_log_path: "/var/log/consul"
+consul_log_level: "INFO"
+consul_syslog_enable: "true"
+consul_ui_url: "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_web_ui.zip"
+consul_temp: "/tmp"
+consul_pkg: "consul_{{ consul_version }}_linux_amd64.zip"
+consul_uipkg: "consul_{{ consul_version }}_web_ui.zip"
+consul_uidir: "{{ consul_etc_path }}/ui"
+consul_bootstrap_ip: 10.135.162.47
+consul_server1_ip: 10.135.162.52
+consul_server2_ip: 10.135.162.41
+consul_webui_ip1: 0.0.0.0
+consul_webui_ip2: 0.0.0.0
+consul_webui_ip3: 0.0.0.0
+consul_datacenter_name: PE-1
+consul_apache_ssl_dir: /etc/apache2/ssl
+consul_apache_user: admin
+consul_apache_password: Consul@123
+
+==================================================================================================================
+
+templates/controller.j2
+
+{
+    "bootstrap" : false,
+    "server" : false,
+    "datacenter" : "{{ consul_datacenter_name }}",
+    "data_dir" : "{{ consul_data_path }}",
+    "encrypt" : "RYBg5+WxobPhqUpHW5RthA==",
+    "log_level" : "{{ consul_log_level }}",
+    "enable_syslog" : {{ consul_syslog_enable }},
+    "bind_addr": "{{ ansible_eth2.ipv4.address }}",
+    "start_join" : ["{{ consul_bootstrap_ip }}", "{{ consul_server1_ip }}", "{{ consul_server2_ip }}"],
+    "node_name": "{{ ansible_hostname }}",
+    "checks": [
+        {
+            "id" : "check_cpu_utilization",
+            "notes" : "Greater than 50% warn, greater than 75% fail.",
+            "name" : "CPU Utilization",
+            "script" : "{{ consul_scritp_dir }}/cpu_utilization.sh",
+            "interval" : "10s"
+        },
+        {
+          "id" : "check_mem_utilization",
+          "notes" : "Greater than 50% warn, greater than 75% fail.",
+          "name" : "MEM Utilization",
+          "script" : "{{ consul_scritp_dir }}/mem_utilization.sh",
+          "interval" : "10s"
+        },
+        {
+          "id" : "check_hdd_utilization",
+          "notes" : "Greater than 50% warn, greater than 75% fail.",
+          "name" : "HDD Utilization",
+          "script" : "{{ consul_scritp_dir }}/hdd_utilization.sh",
+          "interval" : "10s"
+
+============================================================================================================
+
+controller.yml
+
+- hosts: controller
+  gather_facts: yes
+  tags: controller
+  vars_files:
+   - vars/main.yml
+  tasks:
+
+   - name: copy consul zip file
+     copy: src=files/{{ consul_pkg }} dest={{ consul_temp }}
+     register: consul_copy
+
+   - name: copy consul zip file
+     command: echo "consul copy failed"
+     when: consul_copy | failed
+
+   - name: unarchive consul
+     unarchive: src={{ consul_temp }}/{{ consul_pkg }} dest={{ consul_bin_path }} copy=no
+     register: unarchive_consul
+     when: consul_copy | success
+
+   - name: Create client  directory
+     file: path={{ consul_client_dir }} state=directory
+     when: unarchive_consul | success
+
+   - name: Create script directory
+     file: path={{ consul_scritp_dir }} state=directory
+     when: unarchive_consul | success
+
+   - name: copy script to script directory
+     copy: src=files/controller_script/  dest={{ consul_scritp_dir }} mode=0777
+     when: unarchive_consul | success
+   - name: copy client template
+     template: src=templates/controller.j2  dest={{ consul_client_dir }}/config.json
+     when: unarchive_consul | success
+
+   - name: consul boot scritp
+     template: src=templates/consul-client.j2  dest=/etc/init/consul.conf
+     when: unarchive_consul | success
+
+   - name: start consul server
+     command: start consul
+
+================================================================================================
+
+/root/Ansible-scripts/consul/files/controller_script  -  scripts path

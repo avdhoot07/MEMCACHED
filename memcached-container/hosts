@@ -1,0 +1,4 @@
+[memcached-container]
+192.168.56.104 memcached_port=11216
+192.168.56.105 memcached_port=11217
+192.168.56.103 memcached_port=11218

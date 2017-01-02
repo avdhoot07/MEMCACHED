@@ -1,0 +1,33 @@
+---
+- hosts: memcached-1
+  gather_facts: yes
+  tags: memcached
+  vars_files:
+   - vars/main.yml
+  tasks:
+   - name: Memcached_Install_packages
+     apt: name={{ item }}
+        state=latest
+        update_cache=yes
+     with_items:
+        - php5-memcache
+        - memcached
+        - apache2
+        - php5 
+        - libapache2-mod-php5 
+        - php5-mcrypt
+
+   - name: copy session.php file in document root
+     copy: src=files/session.php dest={{ document_root_dir }}
+
+   - name: update php.ini file in server
+     copy: src=files/php.ini dest={{ phpini_path_dir }}/php.ini
+
+   - name: update memcached.ini file in servers
+     copy: src=files/memcached.ini dest={{ memcache_ini_dir }}/memcached.ini
+
+   - name: Memcached Config file
+     template: src=templates/etc-memcached_1.j2 dest=/etc/memcached.conf
+
+   - name: start consul server
+     command: service apache2 restart

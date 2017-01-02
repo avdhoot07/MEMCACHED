@@ -1,0 +1,33 @@
+---
+- hosts: memcached-container
+  gather_facts: yes
+  tags: memcached-container
+  tasks:
+
+   - name: Update repo
+     apt: update_cache=yes
+
+   - name: Update aufs support
+     shell: "apt-get install linux-image-extra-`uname -r`"
+
+   - name: Upgrade repository
+     apt: upgrade=dist
+
+   - name: docker repository key to apt-key for package verification
+     shell: "apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D"
+
+   - name: docker repository to Apt sources
+     apt_repository: repo='deb https://apt.dockerproject.org/repo ubuntu-trusty main' state=present
+
+   - name: DOCKER_Install_packages
+     apt: name={{ item }}
+        state=latest
+        update_cache=yes
+     with_items:
+        - docker-engine
+
+   - name: Copy Dockerfile 
+     template: src=templates/Dockerfile dest=/root/     
+
+   - name: Docker Image for Memcached Containers-1
+     command: docker build -t memcached_img /root/.

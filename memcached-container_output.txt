@@ -1,0 +1,57 @@
+root@node2:~/Ansible-scripts/memcached-container# ansible-playbook memcached-container.yml -i hosts
+
+PLAY [memcached-container] ****************************************************
+
+GATHERING FACTS ***************************************************************
+ok: [192.168.56.104]
+ok: [192.168.56.103]
+ok: [192.168.56.105]
+
+TASK: [Update repo] ***********************************************************
+ok: [192.168.56.105]
+ok: [192.168.56.104]
+ok: [192.168.56.103]
+
+TASK: [Update aufs support] ***************************************************
+changed: [192.168.56.103]
+changed: [192.168.56.105]
+changed: [192.168.56.104]
+
+TASK: [Upgrade repository] ****************************************************
+ok: [192.168.56.103]
+changed: [192.168.56.105]
+changed: [192.168.56.104]
+
+TASK: [docker repository key to apt-key for package verification] *************
+changed: [192.168.56.104]
+changed: [192.168.56.105]
+changed: [192.168.56.103]
+
+TASK: [docker repository to Apt sources] **************************************
+ok: [192.168.56.103]
+ok: [192.168.56.104]
+ok: [192.168.56.105]
+
+TASK: [DOCKER_Install_packages] ***********************************************
+ok: [192.168.56.103] => (item=docker-engine)
+ok: [192.168.56.105] => (item=docker-engine)
+ok: [192.168.56.104] => (item=docker-engine)
+
+TASK: [Copy Dockerfile] *******************************************************
+changed: [192.168.56.105]
+changed: [192.168.56.104]
+changed: [192.168.56.103]
+
+TASK: [Docker Image for Memcached Containers-1] *******************************
+changed: [192.168.56.105]
+changed: [192.168.56.103]
+changed: [192.168.56.104]
+
+PLAY RECAP ********************************************************************
+           to retry, use: --limit @/root/memcached-container.retry
+
+192.168.56.103             : ok=9    changed=5    unreachable=0    failed=0
+192.168.56.104             : ok=9    changed=5    unreachable=0    failed=0
+192.168.56.105             : ok=9    changed=5    unreachable=0    failed=0
+
+root@node2:~/Ansible-scripts/memcached-container#
